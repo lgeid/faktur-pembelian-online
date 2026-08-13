@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nota Pesanan - Logo Dapat Diatur</title>
+    <title>Nota Pesanan - Logo dari File/Link</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
@@ -31,12 +31,17 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        .panel-kontrol input, .panel-kontrol button {
+        .panel-kontrol input, .panel-kontrol button, .panel-kontrol input[type="file"] {
             margin: 5px 0;
             padding: 8px;
             width: 100%;
             border: 1px solid #ddd;
             border-radius: 4px;
+        }
+
+        .panel-kontrol input[type="file"] {
+            border: none;
+            padding: 4px 0;
         }
 
         .panel-kontrol button {
@@ -75,7 +80,6 @@
             font-size: 13px;
         }
 
-        /* === AREA INVOICE & LOGO === */
         .invoice {
             background: white;
             width: 210mm;
@@ -91,7 +95,7 @@
         .logo-wrapper {
             position: relative;
             margin-bottom: 10px;
-            height: 60px; /* Ruang tetap agar tidak tumpang tindih */
+            height: 60px;
         }
 
         #logoShopee {
@@ -99,9 +103,10 @@
             top: var(--logo-top, 0mm);
             left: var(--logo-left, 50%);
             transform: translateX(var(--logo-shift, -50%));
-            height: calc(var(--logo-height, 40px) * 1);
+            height: calc(var(--logo-height, 50px) * 1);
             width: auto;
             max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
         }
 
@@ -109,7 +114,7 @@
             font-size: 16px;
             margin-bottom: 15px;
             font-weight: bold;
-            margin-top: 70px; /* Jarak aman dari logo */
+            margin-top: 70px;
         }
 
         .info-pembeli, .info-pesanan {
@@ -197,10 +202,19 @@
     <div class="container">
         <div class="panel-kontrol">
             <h3>Pengaturan Logo</h3>
-            <label>Link Logo:</label>
-            <input type="url" id="inputLogo" placeholder="Masukkan link gambar logo...">
-            <button onclick="gantiLogo()">Terapkan Logo</button>
 
+            <!-- Pilih dari File HP/Komputer -->
+            <label>Pilih Logo dari Penyimpanan:</label>
+            <input type="file" id="logoFile" accept="image/*" onchange="gantiLogoDariFile(this)">
+
+            <p style="text-align:center; margin:8px 0; color:#999; font-size:12px;">—— ATAU ——</p>
+
+            <!-- Masukkan Link -->
+            <label>Atau Masukkan Link Logo:</label>
+            <input type="url" id="inputLogo" placeholder="https://...">
+            <button onclick="gantiLogoDariLink()">Terapkan Logo dari Link</button>
+
+            <!-- Pengaturan Posisi & Ukuran -->
             <div class="pengaturan-logo">
                 <label>Ukuran Tinggi Logo (px):</label>
                 <input type="range" id="ukuranLogo" min="20" max="120" value="50" oninput="aturLogo()">
@@ -340,12 +354,27 @@
             return 'Rp' + Number(angka).toLocaleString('id-ID');
         }
 
-        function gantiLogo() {
-            const linkLogo = document.getElementById('inputLogo').value.trim();
-            document.getElementById('logoShopee').src = linkLogo;
+        // === Ganti Logo DARI FILE PENYIMPANAN ===
+        function gantiLogoDariFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const pembaca = new FileReader();
+            pembaca.onload = function(e) {
+                document.getElementById('logoShopee').src = e.target.result;
+            };
+            pembaca.readAsDataURL(file);
         }
 
-        // === FUNGSI PENGATURAN LOGO ===
+        // === Ganti Logo DARI LINK ===
+        function gantiLogoDariLink() {
+            const link = document.getElementById('inputLogo').value.trim();
+            if (link) {
+                document.getElementById('logoShopee').src = link;
+            }
+        }
+
+        // === Atur Ukuran & Posisi Logo ===
         function aturLogo() {
             const ukuran = document.getElementById('ukuranLogo').value;
             const vertikal = document.getElementById('geserVertikal').value;
