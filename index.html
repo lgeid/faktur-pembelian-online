@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nota Pesanan - PDF Tidak Terpotong</title>
+    <title>Nota Pesanan - Logo Dapat Diatur</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
@@ -64,34 +64,52 @@
             width: auto;
         }
 
-        /* === PERBAIKAN UTAMA: Ukuran & Margin A4 Pas === */
+        .pengaturan-logo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 12px;
+            margin-top: 8px;
+        }
+
+        .pengaturan-logo label {
+            font-size: 13px;
+        }
+
+        /* === AREA INVOICE & LOGO === */
         .invoice {
             background: white;
             width: 210mm;
             min-height: 297mm;
-            padding: 15mm; /* Dikurangi agar isi lebih luas */
+            padding: 15mm;
             margin: 0 auto;
             box-shadow: 0 0 5px rgba(0,0,0,0.1);
             position: relative;
-            font-size: 13px; /* Sedikit diperkecil agar lebih muat */
+            font-size: 13px;
             line-height: 1.5;
         }
 
         .logo-wrapper {
-            text-align: center;
+            position: relative;
             margin-bottom: 10px;
+            height: 60px; /* Ruang tetap agar tidak tumpang tindih */
         }
 
-        .logo-wrapper img {
-            height: 40px;
-            object-fit: contain;
+        #logoShopee {
+            position: absolute;
+            top: var(--logo-top, 0mm);
+            left: var(--logo-left, 50%);
+            transform: translateX(var(--logo-shift, -50%));
+            height: calc(var(--logo-height, 40px) * 1);
+            width: auto;
             max-width: 100%;
+            object-fit: contain;
         }
 
         .judul-nota {
             font-size: 16px;
             margin-bottom: 15px;
             font-weight: bold;
+            margin-top: 70px; /* Jarak aman dari logo */
         }
 
         .info-pembeli, .info-pesanan {
@@ -157,15 +175,9 @@
             color: #666;
         }
 
-        /* === Aturan Cetak/PDF: Pastikan Tidak Terpotong === */
         @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            .panel-kontrol {
-                display: none !important;
-            }
+            body { background: white; padding: 0; }
+            .panel-kontrol { display: none !important; }
             .invoice {
                 width: 100% !important;
                 box-shadow: none !important;
@@ -184,14 +196,28 @@
 <body>
     <div class="container">
         <div class="panel-kontrol">
-            <h3>Pengaturan Invoice</h3>
-            
+            <h3>Pengaturan Logo</h3>
             <label>Link Logo:</label>
             <input type="url" id="inputLogo" placeholder="Masukkan link gambar logo...">
-            <button onclick="gantiLogo()">Ganti Logo</button>
+            <button onclick="gantiLogo()">Terapkan Logo</button>
 
-            <hr style="margin: 15px 0; border: 0.5px solid #eee;">
+            <div class="pengaturan-logo">
+                <label>Ukuran Tinggi Logo (px):</label>
+                <input type="range" id="ukuranLogo" min="20" max="120" value="50" oninput="aturLogo()">
+                <label>Geser Atas–Bawah (mm):</label>
+                <input type="range" id="geserVertikal" min="-8" max="8" value="0" oninput="aturLogo()">
+                <label>Geser Kiri–Kanan (%):</label>
+                <input type="range" id="geserHorizontal" min="-50" max="50" value="0" oninput="aturLogo()">
+            </div>
+            <p style="font-size:12px;color:#666;margin-top:4px;">
+                Ukuran: <span id="nilaiUkuran">50</span>px | 
+                Geser Vertikal: <span id="nilaiVertikal">0</span>mm | 
+                Geser Horizontal: <span id="nilaiHorizontal">0</span>%
+            </p>
 
+            <hr style="margin:15px 0;border:0.5px solid #eee;">
+
+            <h3>Data Pesanan</h3>
             <label>Nama Pembeli:</label>
             <input type="text" id="namaPembeli" placeholder="Masukkan nama pembeli..." oninput="buatTandaTangan()">
 
@@ -216,12 +242,12 @@
             <label>Jasa Kirim:</label>
             <input type="text" id="jasaKirim" placeholder="Contoh: Hemat / Reguler...">
 
-            <hr style="margin: 15px 0; border: 0.5px solid #eee;">
+            <hr style="margin:15px 0;border:0.5px solid #eee;">
             <h4>Detail Barang</h4>
             <button onclick="tambahBarisBarang()">+ Tambah Barang</button>
             <div id="daftarBarang"></div>
 
-            <hr style="margin: 15px 0; border: 0.5px solid #eee;">
+            <hr style="margin:15px 0;border:0.5px solid #eee;">
             <h4>Biaya & Diskon</h4>
             <label>Diskon Produk (Rp):</label>
             <input type="number" id="diskonProduk" placeholder="0" oninput="hitungOtomatis()">
@@ -317,6 +343,22 @@
         function gantiLogo() {
             const linkLogo = document.getElementById('inputLogo').value.trim();
             document.getElementById('logoShopee').src = linkLogo;
+        }
+
+        // === FUNGSI PENGATURAN LOGO ===
+        function aturLogo() {
+            const ukuran = document.getElementById('ukuranLogo').value;
+            const vertikal = document.getElementById('geserVertikal').value;
+            const horizontal = document.getElementById('geserHorizontal').value;
+
+            document.getElementById('nilaiUkuran').textContent = ukuran;
+            document.getElementById('nilaiVertikal').textContent = vertikal;
+            document.getElementById('nilaiHorizontal').textContent = horizontal;
+
+            const logo = document.getElementById('logoShopee');
+            logo.style.setProperty('--logo-height', `${ukuran}px`);
+            logo.style.setProperty('--logo-top', `${vertikal}mm`);
+            logo.style.setProperty('--logo-shift', `calc(-50% + ${horizontal}%)`);
         }
 
         function tambahBarisBarang() {
