@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pembuat Invoice Shopee PDF</title>
+    <title>Nota Pesanan - PDF Tidak Terpotong</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
@@ -64,52 +64,56 @@
             width: auto;
         }
 
+        /* === PERBAIKAN UTAMA: Ukuran & Margin A4 Pas === */
         .invoice {
             background: white;
             width: 210mm;
             min-height: 297mm;
-            padding: 20mm;
+            padding: 15mm; /* Dikurangi agar isi lebih luas */
             margin: 0 auto;
             box-shadow: 0 0 5px rgba(0,0,0,0.1);
             position: relative;
+            font-size: 13px; /* Sedikit diperkecil agar lebih muat */
+            line-height: 1.5;
         }
 
         .logo-wrapper {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .logo-wrapper img {
             height: 40px;
             object-fit: contain;
+            max-width: 100%;
         }
 
         .judul-nota {
             font-size: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            font-weight: bold;
         }
 
         .info-pembeli, .info-pesanan {
-            font-size: 13px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             line-height: 1.5;
         }
 
         .info-pembeli span, .info-pesanan span {
             display: inline-block;
-            min-width: 100px;
+            min-width: 90px;
             font-weight: bold;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
             margin-bottom: 15px;
+            font-size: inherit;
         }
 
         table th, table td {
-            padding: 8px 5px;
+            padding: 6px 4px;
             text-align: left;
             border-bottom: 1px solid #eee;
         }
@@ -120,57 +124,59 @@
 
         .ringkasan-pembayaran {
             margin-left: auto;
-            width: 300px;
-            font-size: 13px;
+            width: 280px;
+            font-size: inherit;
         }
 
         .baris-ringkasan {
             display: flex;
             justify-content: space-between;
-            padding: 4px 0;
+            padding: 3px 0;
         }
 
         .baris-ringkasan.total {
             font-weight: bold;
-            padding-top: 8px;
+            padding-top: 6px;
             border-top: 1px solid #ddd;
             margin-top: 4px;
         }
 
         .tanda-tangan {
-            margin-top: 40px;
+            margin-top: 30px;
             text-align: right;
             font-family: 'Brush Script MT', 'Segoe Script', cursive;
             font-size: 22px;
             color: #333;
-            padding-right: 20px;
+            padding-right: 10px;
         }
 
         .footer {
-            margin-top: 60px;
+            margin-top: 50px;
             font-size: 12px;
             text-align: center;
             color: #666;
         }
 
+        /* === Aturan Cetak/PDF: Pastikan Tidak Terpotong === */
         @media print {
             body {
                 background: white;
                 padding: 0;
             }
             .panel-kontrol {
-                display: none;
+                display: none !important;
             }
             .invoice {
-                width: 100%;
-                box-shadow: none;
-                margin: 0;
-                padding: 0;
+                width: 100% !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 15mm !important;
+                min-height: auto !important;
             }
         }
 
         @page {
-            size: A4;
+            size: A4 portrait;
             margin: 0;
         }
     </style>
@@ -205,7 +211,7 @@
             <input type="text" id="waktuBayar" placeholder="Contoh: 13/08/2026...">
 
             <label>Metode Pembayaran:</label>
-            <input type="text" id="metodeBayar" placeholder="Contoh: Bank BCA / E-Wallet...">
+            <input type="text" id="metodeBayar" placeholder="Contoh: E-WALET, QRIS BCA...">
 
             <label>Jasa Kirim:</label>
             <input type="text" id="jasaKirim" placeholder="Contoh: Hemat / Reguler...">
@@ -213,9 +219,7 @@
             <hr style="margin: 15px 0; border: 0.5px solid #eee;">
             <h4>Detail Barang</h4>
             <button onclick="tambahBarisBarang()">+ Tambah Barang</button>
-            <div id="daftarBarang">
-                <!-- Baris barang akan ditambahkan disini -->
-            </div>
+            <div id="daftarBarang"></div>
 
             <hr style="margin: 15px 0; border: 0.5px solid #eee;">
             <h4>Biaya & Diskon</h4>
@@ -237,9 +241,9 @@
 
         <div class="invoice" id="areaInvoice">
             <div class="logo-wrapper">
-                <img id="logoShopee" src="" alt="Logo">
+                <img id="logoShopee" src="" alt="Logo Toko">
             </div>
-            <div class="judul-nota"><strong>Nota Pesanan</strong></div>
+            <div class="judul-nota">Nota Pesanan</div>
 
             <div class="info-pembeli">
                 <p><span>Nama Pembeli:</span> <span id="tNamaPembeli"></span></p>
@@ -249,8 +253,8 @@
             </div>
 
             <div class="info-pesanan">
-                <p><span>No. Pesanan:</span> <span id="tNoPesanan"></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Waktu Pembayaran:</span> <span id="tWaktuBayar"></span></p>
-                <p><span>Metode Pembayaran:</span> <span id="tMetodeBayar"></span> &nbsp;&nbsp;&nbsp;&nbsp; <span>Jasa Kirim:</span> <span id="tJasaKirim"></span></p>
+                <p><span>No. Pesanan:</span> <span id="tNoPesanan"></span> &nbsp;&nbsp; <span>Waktu Pembayaran:</span> <span id="tWaktuBayar"></span></p>
+                <p><span>Metode Pembayaran:</span> <span id="tMetodeBayar"></span> &nbsp;&nbsp; <span>Jasa Kirim:</span> <span id="tJasaKirim"></span></p>
             </div>
 
             <h4>Rincian Pesanan</h4>
@@ -263,9 +267,7 @@
                         <th>Subtotal</th>
                     </tr>
                 </thead>
-                <tbody id="tabelBarang">
-                    <!-- Data barang akan muncul disini -->
-                </tbody>
+                <tbody id="tabelBarang"></tbody>
             </table>
 
             <div class="ringkasan-pembayaran">
@@ -295,9 +297,7 @@
                 </div>
             </div>
 
-            <div class="tanda-tangan" id="tandaTangan">
-                <!-- Tanda tangan muncul disini -->
-            </div>
+            <div class="tanda-tangan" id="tandaTangan"></div>
 
             <div class="footer">
                 <p>1 of 1</p>
@@ -309,19 +309,16 @@
     <script>
         let nomorBaris = 0;
 
-        // Format angka jadi Rupiah
         function formatRupiah(angka) {
             if (!angka || isNaN(angka)) return 'Rp0';
             return 'Rp' + Number(angka).toLocaleString('id-ID');
         }
 
-        // Ganti Logo
         function gantiLogo() {
             const linkLogo = document.getElementById('inputLogo').value.trim();
             document.getElementById('logoShopee').src = linkLogo;
         }
 
-        // Tambah Baris Barang
         function tambahBarisBarang() {
             nomorBaris++;
             const container = document.getElementById('daftarBarang');
@@ -331,31 +328,25 @@
             baris.innerHTML = `
                 <label>Nama Barang:</label>
                 <input type="text" class="namaBarang" placeholder="Masukkan nama barang...">
-                
                 <label>Jumlah:</label>
                 <input type="number" class="jumlahBarang" placeholder="0" oninput="hitungOtomatis()">
-                
                 <label>Harga Satuan (Rp):</label>
                 <input type="number" class="hargaSatuan" placeholder="0" oninput="hitungOtomatis()">
-                
                 <button class="hapus-barang" onclick="hapusBaris(${nomorBaris})">Hapus Barang</button>
             `;
             container.appendChild(baris);
         }
 
-        // Hapus Baris Barang
         function hapusBaris(id) {
             document.getElementById(`baris-${id}`).remove();
             hitungOtomatis();
         }
 
-        // Buat Tanda Tangan Otomatis dari Nama Pembeli
         function buatTandaTangan() {
             const nama = document.getElementById('namaPembeli').value.trim();
-            document.getElementById('tandaTangan').textContent = nama ? nama : '';
+            document.getElementById('tandaTangan').textContent = nama || '';
         }
 
-        // Rumus Perhitungan Otomatis
         function hitungOtomatis() {
             const daftarNama = document.querySelectorAll('.namaBarang');
             const daftarJumlah = document.querySelectorAll('.jumlahBarang');
@@ -397,7 +388,6 @@
             document.getElementById('tTotalBayar').textContent = formatRupiah(totalBayar);
         }
 
-        // Tampilkan Semua Data ke Nota
         function isiDataOtomatis() {
             document.getElementById('tNamaPembeli').textContent = document.getElementById('namaPembeli').value || '-';
             document.getElementById('tAlamatPembeli').textContent = document.getElementById('alamatPembeli').value || '-';
@@ -412,15 +402,23 @@
             hitungOtomatis();
         }
 
-        // Ekspor ke PDF
         function cetakPDF() {
             const elemenInvoice = document.getElementById('areaInvoice');
             const opsi = {
                 margin: 0,
-                filename: 'Nota_Shopee.pdf',
+                filename: 'Nota_Pesanan.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true,
+                    letterRendering: true
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait',
+                    compress: true
+                }
             };
             
             html2pdf().set(opsi).from(elemenInvoice).save();
