@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nota Pesanan - Logo dari File/Link</title>
+    <title>Pembuat Invoice Shopee Identik</title>
+    <!-- Library untuk PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            /* Menggunakan font sans-serif standar menyerupai Arial/Helvetica di gambar */
+            font-family: Arial, Helvetica, sans-serif;
         }
 
         body {
-            background-color: #f0f0f0;
-            padding: 20px;
+            background-color: #e5e7eb;
+            padding: 15px;
         }
 
         .container {
@@ -23,477 +25,553 @@
             margin: 0 auto;
         }
 
+        /* === PANEL KONTROL === */
         .panel-kontrol {
             background: white;
             padding: 20px;
             margin-bottom: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 14px;
         }
 
-        .panel-kontrol input, .panel-kontrol button, .panel-kontrol input[type="file"] {
-            margin: 5px 0;
-            padding: 8px;
+        .panel-kontrol label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .panel-kontrol input {
             width: 100%;
-            border: 1px solid #ddd;
+            padding: 8px;
+            margin-top: 4px;
+            border: 1px solid #ccc;
             border-radius: 4px;
         }
 
         .panel-kontrol input[type="file"] {
-            border: none;
-            padding: 4px 0;
+            padding: 5px;
+            background: #f9fafb;
         }
 
-        .panel-kontrol button {
+        .btn-grup {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-utama {
+            flex: 1;
             background-color: #ee4d2d;
             color: white;
             border: none;
-            cursor: pointer;
+            padding: 12px;
             font-weight: bold;
-            margin-top: 10px;
+            border-radius: 4px;
+            cursor: pointer;
         }
 
-        .panel-kontrol button:hover {
-            background-color: #d63b1c;
+        .btn-utama:hover { background-color: #d63b1c; }
+
+        .btn-pdf {
+            flex: 1;
+            background-color: #059669;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-pdf:disabled { background-color: #9ca3af; cursor: wait; }
+
+        hr.divider {
+            margin: 20px 0;
+            border: 0;
+            border-top: 1px solid #ddd;
         }
 
-        .barang-row {
-            border-top: 1px dashed #ccc;
-            padding: 10px 0;
-        }
-
-        .hapus-barang {
-            background-color: #dc3545;
-            padding: 4px 8px;
-            font-size: 12px;
-            width: auto;
-        }
-
-        .pengaturan-logo {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px 12px;
-            margin-top: 8px;
-        }
-
-        .pengaturan-logo label {
-            font-size: 13px;
+        /* === AREA INVOICE (MIRIP GAMBAR ASLI) === */
+        .invoice-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .invoice {
             background: white;
-            width: 210mm;
-            min-height: 297mm;
-            padding: 15mm;
+            width: 800px; /* Lebar statis untuk hasil PDF yang stabil */
+            padding: 40px 50px;
             margin: 0 auto;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
             position: relative;
-            font-size: 13px;
-            line-height: 1.5;
+            color: #000;
+            font-size: 12px; /* Ukuran dasar teks */
         }
 
         .logo-wrapper {
-            position: relative;
-            margin-bottom: 10px;
-            height: 60px;
+            text-align: center;
+            margin-bottom: 25px;
         }
 
-        #logoShopee {
-            position: absolute;
-            top: var(--logo-top, 0mm);
-            left: var(--logo-left, 50%);
-            transform: translateX(var(--logo-shift, -50%));
-            height: calc(var(--logo-height, 50px) * 1);
-            width: auto;
-            max-width: 100%;
-            max-height: 100%;
+        .logo-wrapper img {
+            height: 65px;
             object-fit: contain;
         }
 
         .judul-nota {
-            font-size: 16px;
+            font-size: 14px;
             margin-bottom: 15px;
-            font-weight: bold;
-            margin-top: 70px;
         }
 
-        .info-pembeli, .info-pesanan {
-            margin-bottom: 12px;
-            line-height: 1.5;
+        /* Kotak Info Abu-abu */
+        .box-grey {
+            background-color: #f6f6f6;
+            padding: 15px;
+            margin-bottom: 20px;
+            line-height: 1.6;
         }
 
-        .info-pembeli span, .info-pesanan span {
-            display: inline-block;
-            min-width: 90px;
+        .info-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .info-alamat { margin-bottom: 8px; }
+        .info-alamat strong { display: block; }
+
+        /* Grid 4 Kolom untuk Pesanan */
+        .grid-pesanan {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+        
+        .grid-pesanan strong { display: block; margin-bottom: 2px;}
+
+        /* Rincian Pesanan Tabel */
+        .judul-rincian {
             font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 10px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
-            font-size: inherit;
+            font-size: 11px;
+            margin-bottom: 10px;
         }
 
         table th, table td {
-            padding: 6px 4px;
-            text-align: left;
+            padding: 8px 5px;
+            text-align: center;
+        }
+
+        /* Tata letak kolom tabel spesifik seperti di gambar */
+        table th:nth-child(1), table td:nth-child(1) { width: 5%; text-align: left; }
+        table th:nth-child(2), table td:nth-child(2) { width: 45%; text-align: left; }
+        table th:nth-child(3), table td:nth-child(3) { width: 15%; text-align: left; }
+        table th:nth-child(4), table td:nth-child(4) { width: 15%; text-align: center; }
+        table th:nth-child(5), table td:nth-child(5) { width: 10%; text-align: center; }
+        table th:nth-child(6), table td:nth-child(6) { width: 10%; text-align: right; }
+
+        table th {
+            border-top: 1px solid #ccc;
             border-bottom: 1px solid #eee;
+            font-weight: bold;
+        }
+        
+        table td { border-bottom: 1px solid #eee; vertical-align: top; }
+
+        /* Area Bawah Tabel */
+        .tabel-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+            font-size: 11px;
+            line-height: 1.5;
         }
 
-        table th:last-child, table td:last-child {
-            text-align: right;
+        .tabel-footer-teks { text-align: left; padding-right: 15px; font-weight: bold;}
+        .tabel-footer-nilai { text-align: right; font-weight: bold;}
+
+        /* Box Ringkasan Kanan Bawah */
+        .box-ringkasan-container {
+            display: flex;
+            justify-content: flex-end;
         }
 
-        .ringkasan-pembayaran {
-            margin-left: auto;
-            width: 280px;
-            font-size: inherit;
+        .box-ringkasan {
+            background-color: #f6f6f6;
+            width: 320px;
+            padding: 15px;
+            font-size: 11px;
         }
 
         .baris-ringkasan {
             display: flex;
             justify-content: space-between;
-            padding: 3px 0;
+            padding: 5px 0;
+            color: #333;
         }
 
         .baris-ringkasan.total {
             font-weight: bold;
-            padding-top: 6px;
-            border-top: 1px solid #ddd;
-            margin-top: 4px;
+            font-size: 13px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ccc;
+            color: #000;
         }
 
-        .tanda-tangan {
-            margin-top: 30px;
-            text-align: right;
-            font-family: 'Brush Script MT', 'Segoe Script', cursive;
-            font-size: 22px;
-            color: #333;
-            padding-right: 10px;
-        }
+        .baris-ringkasan.total .total-rp { font-size: 15px; }
 
-        .footer {
-            margin-top: 50px;
-            font-size: 12px;
+        /* Footer */
+        .footer-invoice {
+            margin-top: 100px; /* Jarak jauh ke bawah seperti di gambar */
+            font-size: 10px;
             text-align: center;
-            color: #666;
+            color: #333;
+            line-height: 1.4;
         }
 
-        @media print {
-            body { background: white; padding: 0; }
-            .panel-kontrol { display: none !important; }
-            .invoice {
-                width: 100% !important;
-                box-shadow: none !important;
-                margin: 0 !important;
-                padding: 15mm !important;
-                min-height: auto !important;
-            }
-        }
-
-        @page {
-            size: A4 portrait;
-            margin: 0;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="panel-kontrol">
-            <h3>Pengaturan Logo</h3>
+        <!-- PANEL KONTROL -->
+        <div class="panel-kontrol" id="panelKontrol">
+            <h3 style="margin-bottom:15px; color:#333; text-align:center;">Pengaturan Invoice</h3>
+            
+            <label>Pilih File Logo (Dari HP/Laptop):</label>
+            <input type="file" id="logoFile" accept="image/*" onchange="gantiLogoFile(this)">
 
-            <!-- Pilih dari File HP/Komputer -->
-            <label>Pilih Logo dari Penyimpanan:</label>
-            <input type="file" id="logoFile" accept="image/*" onchange="gantiLogoDariFile(this)">
+            <hr class="divider">
 
-            <p style="text-align:center; margin:8px 0; color:#999; font-size:12px;">—— ATAU ——</p>
-
-            <!-- Masukkan Link -->
-            <label>Atau Masukkan Link Logo:</label>
-            <input type="url" id="inputLogo" placeholder="https://...">
-            <button onclick="gantiLogoDariLink()">Terapkan Logo dari Link</button>
-
-            <!-- Pengaturan Posisi & Ukuran -->
-            <div class="pengaturan-logo">
-                <label>Ukuran Tinggi Logo (px):</label>
-                <input type="range" id="ukuranLogo" min="20" max="120" value="50" oninput="aturLogo()">
-                <label>Geser Atas–Bawah (mm):</label>
-                <input type="range" id="geserVertikal" min="-8" max="8" value="0" oninput="aturLogo()">
-                <label>Geser Kiri–Kanan (%):</label>
-                <input type="range" id="geserHorizontal" min="-50" max="50" value="0" oninput="aturLogo()">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>Nama Pembeli:</label>
+                    <input type="text" id="namaPembeli" placeholder="Nama Pembeli" value="mochamadbayu.r">
+                </div>
+                <div>
+                    <label>Nama Penjual:</label>
+                    <input type="text" id="namaPenjual" placeholder="Nama Toko" value="MableTableware">
+                </div>
             </div>
-            <p style="font-size:12px;color:#666;margin-top:4px;">
-                Ukuran: <span id="nilaiUkuran">50</span>px | 
-                Geser Vertikal: <span id="nilaiVertikal">0</span>mm | 
-                Geser Horizontal: <span id="nilaiHorizontal">0</span>%
-            </p>
 
-            <hr style="margin:15px 0;border:0.5px solid #eee;">
+            <label>Alamat Lengkap Pembeli:</label>
+            <input type="text" id="alamatPembeli" placeholder="Alamat lengkap" value="Jalan Teluk Mandar Blok A2 No.2, RT.11/RW.11, Pondok Bambu, Duren Sawit (Forest Bubble Drink), KOTA JAKARTA TIMUR, DUREN SAWIT, DKI JAKARTA, ID, 13430">
 
-            <h3>Data Pesanan</h3>
-            <label>Nama Pembeli:</label>
-            <input type="text" id="namaPembeli" placeholder="Masukkan nama pembeli..." oninput="buatTandaTangan()">
+            <label>No. Handphone Pembeli:</label>
+            <input type="text" id="hpPembeli" placeholder="Nomor HP" value="6281342102134">
 
-            <label>Alamat Pembeli:</label>
-            <input type="text" id="alamatPembeli" placeholder="Masukkan alamat lengkap...">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>No. Pesanan:</label>
+                    <input type="text" id="noPesanan" placeholder="Nomor Pesanan" value="2303249XDAMU1Q">
+                </div>
+                <div>
+                    <label>Waktu Pembayaran:</label>
+                    <input type="text" id="waktuBayar" placeholder="Contoh: 24/03/23" value="24/03/23">
+                </div>
+                <div>
+                    <label>Metode Pembayaran:</label>
+                    <input type="text" id="metodeBayar" placeholder="Contoh: Bank BCA" value="Bank BCA">
+                </div>
+                <div>
+                    <label>Jasa Kirim:</label>
+                    <input type="text" id="jasaKirim" placeholder="Contoh: Hemat" value="Hemat">
+                </div>
+            </div>
 
-            <label>No. HP Pembeli:</label>
-            <input type="text" id="hpPembeli" placeholder="Contoh: 628123456789...">
+            <hr class="divider">
+            <h4 style="margin-bottom:10px;">Data Produk</h4>
+            
+            <label>Nama Produk:</label>
+            <input type="text" id="namaBarang" placeholder="Nama Produk" value="Aesthetic Korean Crystal Drinking Glass / Gelas Cafe Ala Korea / Vintage Retro Glass / Yo-Reum Glass">
 
-            <label>Nama Penjual:</label>
-            <input type="text" id="namaPenjual" placeholder="Masukkan nama toko/penjual...">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>Variasi (Kosongkan jika tidak ada):</label>
+                    <input type="text" id="variasiBarang" placeholder="-">
+                </div>
+                <div>
+                    <label>Kuantitas (Jumlah):</label>
+                    <input type="number" id="jumlahBarang" value="1" oninput="hitungTotal()">
+                </div>
+            </div>
 
-            <label>No. Pesanan:</label>
-            <input type="text" id="noPesanan" placeholder="Masukkan nomor pesanan...">
+            <label>Harga Produk (Rp):</label>
+            <input type="number" id="hargaSatuan" value="34900" oninput="hitungTotal()">
 
-            <label>Waktu Pembayaran:</label>
-            <input type="text" id="waktuBayar" placeholder="Contoh: 13/08/2026...">
+            <hr class="divider">
+            <h4 style="margin-bottom:10px;">Rincian Biaya & Diskon</h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>Biaya Pengiriman (Rp):</label>
+                    <input type="number" id="biayaKirim" value="11000" oninput="hitungTotal()">
+                </div>
+                <div>
+                    <label>Total Diskon Pengiriman (Rp):</label>
+                    <input type="number" id="diskonKirim" value="11000" oninput="hitungTotal()">
+                </div>
+                <div>
+                    <label>Biaya Layanan (Rp):</label>
+                    <input type="number" id="biayaLayanan" value="152" oninput="hitungTotal()">
+                </div>
+                <div>
+                    <label>Biaya Penanganan (Rp):</label>
+                    <input type="number" id="biayaPenanganan" value="152" oninput="hitungTotal()">
+                </div>
+            </div>
 
-            <label>Metode Pembayaran:</label>
-            <input type="text" id="metodeBayar" placeholder="Contoh: E-WALET, QRIS BCA...">
-
-            <label>Jasa Kirim:</label>
-            <input type="text" id="jasaKirim" placeholder="Contoh: Hemat / Reguler...">
-
-            <hr style="margin:15px 0;border:0.5px solid #eee;">
-            <h4>Detail Barang</h4>
-            <button onclick="tambahBarisBarang()">+ Tambah Barang</button>
-            <div id="daftarBarang"></div>
-
-            <hr style="margin:15px 0;border:0.5px solid #eee;">
-            <h4>Biaya & Diskon</h4>
-            <label>Diskon Produk (Rp):</label>
-            <input type="number" id="diskonProduk" placeholder="0" oninput="hitungOtomatis()">
-
-            <label>Biaya Layanan (Rp):</label>
-            <input type="number" id="biayaLayanan" placeholder="0" oninput="hitungOtomatis()">
-
-            <label>Diskon Pengiriman (Rp):</label>
-            <input type="number" id="diskonPengiriman" placeholder="0" oninput="hitungOtomatis()">
-
-            <label>Biaya Pengiriman (Rp):</label>
-            <input type="number" id="biayaPengiriman" placeholder="0" oninput="hitungOtomatis()">
-
-            <button onclick="isiDataOtomatis()">Perbarui Tampilan</button>
-            <button onclick="cetakPDF()">Ekspor ke PDF</button>
+            <div class="btn-grup">
+                <button class="btn-utama" onclick="updateTampilan()">🔄 Perbarui Tampilan</button>
+                <button id="btnCetak" class="btn-pdf" onclick="cetakPDF()">📥 Buat PDF Identik</button>
+            </div>
         </div>
 
-        <div class="invoice" id="areaInvoice">
-            <div class="logo-wrapper">
-                <img id="logoShopee" src="" alt="Logo Toko">
-            </div>
-            <div class="judul-nota">Nota Pesanan</div>
-
-            <div class="info-pembeli">
-                <p><span>Nama Pembeli:</span> <span id="tNamaPembeli"></span></p>
-                <p><span>Alamat Pembeli:</span> <span id="tAlamatPembeli"></span></p>
-                <p><span>No. HP Pembeli:</span> <span id="tHpPembeli"></span></p>
-                <p><span>Nama Penjual:</span> <span id="tNamaPenjual"></span></p>
-            </div>
-
-            <div class="info-pesanan">
-                <p><span>No. Pesanan:</span> <span id="tNoPesanan"></span> &nbsp;&nbsp; <span>Waktu Pembayaran:</span> <span id="tWaktuBayar"></span></p>
-                <p><span>Metode Pembayaran:</span> <span id="tMetodeBayar"></span> &nbsp;&nbsp; <span>Jasa Kirim:</span> <span id="tJasaKirim"></span></p>
-            </div>
-
-            <h4>Rincian Pesanan</h4>
-            <table>
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Deskripsi Produk</th>
-                        <th>Jumlah</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelBarang"></tbody>
-            </table>
-
-            <div class="ringkasan-pembayaran">
-                <div class="baris-ringkasan">
-                    <span>Subtotal Produk</span>
-                    <span id="tSubtotalProduk"></span>
+        <!-- TAMPILAN INVOICE -->
+        <div class="invoice-wrapper">
+            <div class="invoice" id="areaInvoice">
+                
+                <div class="logo-wrapper">
+                    <img id="logoShopee" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Shopee.svg/1024px-Shopee.svg.png" alt="Shopee Logo">
                 </div>
-                <div class="baris-ringkasan">
-                    <span>Subtotal Diskon Produk</span>
-                    <span id="tDiskonProduk"></span>
-                </div>
-                <div class="baris-ringkasan">
-                    <span>Biaya Layanan</span>
-                    <span id="tBiayaLayanan"></span>
-                </div>
-                <div class="baris-ringkasan">
-                    <span>Total Diskon Pengiriman</span>
-                    <span id="tDiskonPengiriman"></span>
-                </div>
-                <div class="baris-ringkasan">
-                    <span>Biaya Pengiriman</span>
-                    <span id="tBiayaPengiriman"></span>
-                </div>
-                <div class="baris-ringkasan total">
-                    <span>Total Pembayaran</span>
-                    <span id="tTotalBayar"></span>
-                </div>
-            </div>
+                
+                <div class="judul-nota">Nota Pesanan</div>
 
-            <div class="tanda-tangan" id="tandaTangan"></div>
+                <div class="box-grey">
+                    <div class="info-header">
+                        <div><strong>Nama Pembeli:</strong> <span id="vNamaPembeli"></span></div>
+                        <div><strong>Nama Penjual:</strong> <span id="vNamaPenjual"></span></div>
+                    </div>
+                    <div class="info-alamat">
+                        <strong>Alamat Pembeli:</strong>
+                        <span id="vAlamatPembeli"></span>
+                    </div>
+                    <div><strong>No. Handphone Pembeli:</strong> <span id="vHpPembeli"></span></div>
+                </div>
 
-            <div class="footer">
-                <p>1 of 1</p>
-                <p>End of receipt</p>
+                <div class="grid-pesanan">
+                    <div>
+                        <strong>No. Pesanan</strong>
+                        <span id="vNoPesanan"></span>
+                    </div>
+                    <div>
+                        <strong>Waktu Pembayaran</strong>
+                        <span id="vWaktuBayar"></span>
+                    </div>
+                    <div>
+                        <strong>Metode Pembayaran</strong>
+                        <span id="vMetodeBayar"></span>
+                    </div>
+                    <div>
+                        <strong>Jasa Kirim</strong>
+                        <span id="vJasaKirim"></span>
+                    </div>
+                </div>
+
+                <div class="judul-rincian">Rincian Pesanan</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Produk</th>
+                            <th>Variasi</th>
+                            <th>Harga Produk</th>
+                            <th>Kuantitas</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td id="vNamaBarang"></td>
+                            <td id="vVariasiBarang"></td>
+                            <td id="vHargaSatuan"></td>
+                            <td id="vJumlahBarang"></td>
+                            <td id="vSubtotalBarang"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="tabel-footer">
+                    <div class="tabel-footer-teks">
+                        <div>Subtotal</div>
+                        <div>Total Kuantitas</div>
+                    </div>
+                    <div class="tabel-footer-nilai">
+                        <div id="vSubtotalBawah"></div>
+                        <div id="vKuantitasBawah"></div>
+                    </div>
+                </div>
+
+                <div class="box-ringkasan-container">
+                    <div class="box-ringkasan">
+                        <div class="baris-ringkasan">
+                            <span>Subtotal untuk Produk</span>
+                            <span id="rSubtotalProduk"></span>
+                        </div>
+                        <div class="baris-ringkasan">
+                            <span>Subtotal Pengiriman</span>
+                            <span id="rBiayaKirim"></span>
+                        </div>
+                        <div class="baris-ringkasan">
+                            <span>Biaya Layanan</span>
+                            <span id="rBiayaLayanan"></span>
+                        </div>
+                        <div class="baris-ringkasan">
+                            <span>Total Diskon Pengiriman</span>
+                            <span id="rDiskonKirim"></span>
+                        </div>
+                        <div class="baris-ringkasan">
+                            <span>Biaya Penanganan</span>
+                            <span id="rBiayaPenanganan"></span>
+                        </div>
+                        
+                        <div class="baris-ringkasan total">
+                            <span>Total Pembayaran</span>
+                            <span class="total-rp" id="rTotalAkhir"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-invoice">
+                    1 of 1<br>End of receipt
+                </div>
+
             </div>
         </div>
     </div>
 
     <script>
-        let nomorBaris = 0;
-
-        function formatRupiah(angka) {
-            if (!angka || isNaN(angka)) return 'Rp0';
-            return 'Rp' + Number(angka).toLocaleString('id-ID');
+        // Fungsi Format Mata Uang (Rp tanpa spasi, menggunakan titik)
+        function formatRp(angka, isDiskon = false) {
+            if (!angka || isNaN(angka) || angka === 0) return 'Rp0';
+            let nilaiAbsolut = Math.abs(angka);
+            let formatTeks = 'Rp' + nilaiAbsolut.toLocaleString('id-ID');
+            
+            // Khusus diskon, otomatis dikasih minus di depan sesuai gambar reference
+            if (isDiskon && angka > 0) return '-' + formatTeks;
+            return formatTeks;
         }
 
-        // === Ganti Logo DARI FILE PENYIMPANAN ===
-        function gantiLogoDariFile(input) {
+        // Fitur 1: Ganti Logo Menggunakan File Internal HP
+        function gantiLogoFile(input) {
             const file = input.files[0];
-            if (!file) return;
-
-            const pembaca = new FileReader();
-            pembaca.onload = function(e) {
-                document.getElementById('logoShopee').src = e.target.result;
-            };
-            pembaca.readAsDataURL(file);
-        }
-
-        // === Ganti Logo DARI LINK ===
-        function gantiLogoDariLink() {
-            const link = document.getElementById('inputLogo').value.trim();
-            if (link) {
-                document.getElementById('logoShopee').src = link;
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('logoShopee').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
             }
         }
 
-        // === Atur Ukuran & Posisi Logo ===
-        function aturLogo() {
-            const ukuran = document.getElementById('ukuranLogo').value;
-            const vertikal = document.getElementById('geserVertikal').value;
-            const horizontal = document.getElementById('geserHorizontal').value;
+        // Fitur 2: Hitung Matematis Otomatis
+        function hitungTotal() {
+            let jml = Number(document.getElementById('jumlahBarang').value) || 0;
+            let harga = Number(document.getElementById('hargaSatuan').value) || 0;
+            let kirim = Number(document.getElementById('biayaKirim').value) || 0;
+            let diskonKirim = Number(document.getElementById('diskonKirim').value) || 0;
+            let layanan = Number(document.getElementById('biayaLayanan').value) || 0;
+            let penanganan = Number(document.getElementById('biayaPenanganan').value) || 0;
 
-            document.getElementById('nilaiUkuran').textContent = ukuran;
-            document.getElementById('nilaiVertikal').textContent = vertikal;
-            document.getElementById('nilaiHorizontal').textContent = horizontal;
+            let subtotal = jml * harga;
+            let totalAkhir = subtotal + kirim + layanan + penanganan - diskonKirim;
 
-            const logo = document.getElementById('logoShopee');
-            logo.style.setProperty('--logo-height', `${ukuran}px`);
-            logo.style.setProperty('--logo-top', `${vertikal}mm`);
-            logo.style.setProperty('--logo-shift', `calc(-50% + ${horizontal}%)`);
+            return { subtotal, jml, kirim, diskonKirim, layanan, penanganan, totalAkhir };
         }
 
-        function tambahBarisBarang() {
-            nomorBaris++;
-            const container = document.getElementById('daftarBarang');
-            const baris = document.createElement('div');
-            baris.className = 'barang-row';
-            baris.id = `baris-${nomorBaris}`;
-            baris.innerHTML = `
-                <label>Nama Barang:</label>
-                <input type="text" class="namaBarang" placeholder="Masukkan nama barang...">
-                <label>Jumlah:</label>
-                <input type="number" class="jumlahBarang" placeholder="0" oninput="hitungOtomatis()">
-                <label>Harga Satuan (Rp):</label>
-                <input type="number" class="hargaSatuan" placeholder="0" oninput="hitungOtomatis()">
-                <button class="hapus-barang" onclick="hapusBaris(${nomorBaris})">Hapus Barang</button>
-            `;
-            container.appendChild(baris);
-        }
+        // Fitur 3: Transfer Data ke Tampilan Invoice
+        function updateTampilan() {
+            document.getElementById('vNamaPembeli').textContent = document.getElementById('namaPembeli').value || '-';
+            document.getElementById('vNamaPenjual').textContent = document.getElementById('namaPenjual').value || '-';
+            document.getElementById('vAlamatPembeli').textContent = document.getElementById('alamatPembeli').value || '-';
+            document.getElementById('vHpPembeli').textContent = document.getElementById('hpPembeli').value || '-';
+            document.getElementById('vNoPesanan').textContent = document.getElementById('noPesanan').value || '-';
+            document.getElementById('vWaktuBayar').textContent = document.getElementById('waktuBayar').value || '-';
+            document.getElementById('vMetodeBayar').textContent = document.getElementById('metodeBayar').value || '-';
+            document.getElementById('vJasaKirim').textContent = document.getElementById('jasaKirim').value || '-';
 
-        function hapusBaris(id) {
-            document.getElementById(`baris-${id}`).remove();
-            hitungOtomatis();
-        }
-
-        function buatTandaTangan() {
-            const nama = document.getElementById('namaPembeli').value.trim();
-            document.getElementById('tandaTangan').textContent = nama || '';
-        }
-
-        function hitungOtomatis() {
-            const daftarNama = document.querySelectorAll('.namaBarang');
-            const daftarJumlah = document.querySelectorAll('.jumlahBarang');
-            const daftarHarga = document.querySelectorAll('.hargaSatuan');
-            const tabelBody = document.getElementById('tabelBarang');
+            document.getElementById('vNamaBarang').textContent = document.getElementById('namaBarang').value || '-';
+            document.getElementById('vVariasiBarang').textContent = document.getElementById('variasiBarang').value || '';
             
-            tabelBody.innerHTML = '';
-            let totalSubtotal = 0;
-
-            for (let i = 0; i < daftarNama.length; i++) {
-                const nama = daftarNama[i].value || '-';
-                const jumlah = Number(daftarJumlah[i].value) || 0;
-                const harga = Number(daftarHarga[i].value) || 0;
-                const subtotal = jumlah * harga;
-                totalSubtotal += subtotal;
-
-                const baris = document.createElement('tr');
-                baris.innerHTML = `
-                    <td>${i + 1}</td>
-                    <td>${nama}</td>
-                    <td>${jumlah}</td>
-                    <td>${formatRupiah(subtotal)}</td>
-                `;
-                tabelBody.appendChild(baris);
-            }
-
-            const diskonProduk = Number(document.getElementById('diskonProduk').value) || 0;
-            const biayaLayanan = Number(document.getElementById('biayaLayanan').value) || 0;
-            const diskonPengiriman = Number(document.getElementById('diskonPengiriman').value) || 0;
-            const biayaPengiriman = Number(document.getElementById('biayaPengiriman').value) || 0;
-
-            const totalBayar = totalSubtotal - diskonProduk + biayaLayanan - diskonPengiriman + biayaPengiriman;
-
-            document.getElementById('tSubtotalProduk').textContent = formatRupiah(totalSubtotal);
-            document.getElementById('tDiskonProduk').textContent = formatRupiah(diskonProduk);
-            document.getElementById('tBiayaLayanan').textContent = formatRupiah(biayaLayanan);
-            document.getElementById('tDiskonPengiriman').textContent = formatRupiah(diskonPengiriman);
-            document.getElementById('tBiayaPengiriman').textContent = formatRupiah(biayaPengiriman);
-            document.getElementById('tTotalBayar').textContent = formatRupiah(totalBayar);
-        }
-
-        function isiDataOtomatis() {
-            document.getElementById('tNamaPembeli').textContent = document.getElementById('namaPembeli').value || '-';
-            document.getElementById('tAlamatPembeli').textContent = document.getElementById('alamatPembeli').value || '-';
-            document.getElementById('tHpPembeli').textContent = document.getElementById('hpPembeli').value || '-';
-            document.getElementById('tNamaPenjual').textContent = document.getElementById('namaPenjual').value || '-';
-            document.getElementById('tNoPesanan').textContent = document.getElementById('noPesanan').value || '-';
-            document.getElementById('tWaktuBayar').textContent = document.getElementById('waktuBayar').value || '-';
-            document.getElementById('tMetodeBayar').textContent = document.getElementById('metodeBayar').value || '-';
-            document.getElementById('tJasaKirim').textContent = document.getElementById('jasaKirim').value || '-';
+            let hasil = hitungTotal();
+            let hargaSatuanTeks = formatRp(Number(document.getElementById('hargaSatuan').value) || 0);
             
-            buatTandaTangan();
-            hitungOtomatis();
+            // Update Tabel
+            document.getElementById('vHargaSatuan').textContent = hargaSatuanTeks;
+            document.getElementById('vJumlahBarang').textContent = hasil.jml;
+            document.getElementById('vSubtotalBarang').textContent = formatRp(hasil.subtotal);
+            
+            // Update Kaki Tabel
+            document.getElementById('vSubtotalBawah').textContent = formatRp(hasil.subtotal);
+            document.getElementById('vKuantitasBawah').textContent = hasil.jml + " produk";
+
+            // Update Ringkasan Bawah (menggunakan isDiskon=true untuk Total Diskon Pengiriman)
+            document.getElementById('rSubtotalProduk').textContent = formatRp(hasil.subtotal);
+            document.getElementById('rBiayaKirim').textContent = formatRp(hasil.kirim);
+            document.getElementById('rBiayaLayanan').textContent = formatRp(hasil.layanan);
+            document.getElementById('rDiskonKirim').textContent = formatRp(hasil.diskonKirim, true); 
+            document.getElementById('rBiayaPenanganan').textContent = formatRp(hasil.penanganan);
+            document.getElementById('rTotalAkhir').textContent = formatRp(hasil.totalAkhir);
         }
 
+                        // Fitur 4: CETAK PDF (PERBAIKAN TERPOTONG & BLANK ATAS)
         function cetakPDF() {
-            const elemenInvoice = document.getElementById('areaInvoice');
+            updateTampilan();
+            const btn = document.getElementById('btnCetak');
+            const teksAwal = btn.innerText;
+            btn.innerText = "⏳ Sedang Memproses PDF...";
+            btn.disabled = true;
+
+            const elemenAsli = document.getElementById('areaInvoice');
+            const noResi = document.getElementById('noPesanan').value || 'Baru';
+
+            // TRIK UTAMA: Gulir paksa layar ke paling atas sebelum difoto
+            // Ini mencegah munculnya ruang putih besar di bagian atas PDF akibat posisi scroll HP
+            window.scrollTo(0, 0);
+
             const opsi = {
-                margin: 0,
-                filename: 'Nota_Pesanan.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { 
+                margin:       0,
+                filename:     `Nota_Pesanan_${noResi}.pdf`,
+                image:        { type: 'jpeg', quality: 1 },
+                html2canvas:  { 
                     scale: 2, 
                     useCORS: true,
-                    letterRendering: true
+                    logging: false,
+                    scrollY: 0, // Kunci titik awal foto mutlak di paling atas
+                    scrollX: 0,
+                    windowWidth: 800 // Kunci lebar agar proporsi A4 pas
                 },
-                jsPDF: { 
+                jsPDF:        { 
                     unit: 'mm', 
                     format: 'a4', 
-                    orientation: 'portrait',
-                    compress: true
+                    orientation: 'portrait' 
                 }
             };
-            
-            html2pdf().set(opsi).from(elemenInvoice).save();
+
+            html2pdf().set(opsi).from(elemenAsli).save().then(() => {
+                btn.innerText = teksAwal;
+                btn.disabled = false;
+            }).catch(err => {
+                console.error("Gagal cetak:", err);
+                btn.innerText = teksAwal;
+                btn.disabled = false;
+                alert('Gagal membuat PDF. Pastikan logo sudah terpilih dengan benar.');
+            });
         }
+
+
+
+        // Jalankan saat pertama kali dibuka
+        window.onload = updateTampilan;
     </script>
 </body>
 </html>
